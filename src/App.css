@@ -36,3 +36,50 @@
     transform: rotate(360deg);
   }
 }
+
+.defs{
+  height: 500px;
+  width: 500px;
+  border-color: grey;
+  border-style: solid;
+  margin:auto;
+}
+
+.term{
+  background:white;
+  padding:.6em;
+  margin: .6em;
+  border-style:solid;
+  color:black;
+  border-radius: 25px;
+  text-align: center;
+}
+
+.buttons button{
+  margin-top: 2em;
+  position: relative;
+  background: white;
+  color: black;
+  border-radius: 25px;
+  padding: 1em;
+  width: 7em;
+  font-size: 1.01em;
+}
+
+input{
+  position: relative;
+  background: white;
+  color: black;
+  border-radius: 25px;
+  padding: .5em;
+  font-size: 1.001em;
+}
+
+.counter{
+  margin-top: 2em;
+}
+
+.incorrect{
+  color:red;
+}
+
