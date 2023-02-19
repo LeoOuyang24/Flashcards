@@ -4,6 +4,25 @@ import {read} from './read.js'
 import React, { Component, useState, useEffect } from 'react';
 import {Term, Text} from './term.js'
 
+function shuffle(array) { //shamelessly stolen from https://stackoverflow.com/a/2450976/6947131
+  let currentIndex = array.length,  randomIndex;
+
+  // While there remain elements to shuffle.
+  while (currentIndex != 0) {
+
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+
 export class Flashcards  extends React.Component {
 
   constructor(props)
@@ -20,6 +39,10 @@ export class Flashcards  extends React.Component {
           res.json()).catch(err => console.log(err)).then(json => 
           {
           let temp =json.slice(props.startIndex - 1,props.startIndex - 1 + props.cardAmount);
+          if (props.shuffle)
+          {
+            temp = shuffle(temp)
+          }
           this.setState({cards: temp,studyTerms:temp});
         })
     this.swapTerm = this.swapTerm.bind(this);
@@ -30,18 +53,18 @@ export class Flashcards  extends React.Component {
     this.setState({showTerm: true})
     if (!positive)
     {
-      if (this.state.studyTerms[this.state.curTerm] == this.state.incorrect[this.state.incorrect.length - 1]) //when we go backwards we pop incorrect terms off
+      if (this.state.studyTerms[this.state.curTerm-1] == this.state.incorrect[this.state.incorrect.length - 1]) //when we go backwards we pop incorrect terms off
       {
         this.state.incorrect.pop()
       }
     }
-    this.setState((state,props) => ({curTerm: Math.max(0,this.state.curTerm + 2*(positive) - 1)}))
+    this.setState((state,props) => ({curTerm: Math.min(this.state.studyTerms.length,Math.max(0,this.state.curTerm + 2*(positive) - 1))}))
   }
   swapTerm() //swap between all cards to incorrect cards
   {
       if (this.state.incorrect.length > 0)
       {
-        this.setState({studyTerms: this.state.incorrect,
+        this.setState({studyTerms: this.props.shuffle ? shuffle(this.state.incorrect) : this.state.incorrect, //swap to incorrect terms, shuffling if needed
                       incorrect: [],
                        showTerm: true,
                       curTerm: 0})
@@ -92,7 +115,7 @@ export class Flashcards  extends React.Component {
               <button style={{backgroundColor:"green"}} onClick={() => this.changeTerm(true)}>
                 !
               </button>
-              <button style={{backgroundColor:"red"}} onClick={() => {this.state.incorrect.push(terms[this.state.curTerm]);this.changeTerm(true)}}>
+              <button style={{backgroundColor:"red"}} onClick={() => {if (this.state.curTerm < this.state.studyTerms.length) this.state.incorrect.push(terms[this.state.curTerm]);this.changeTerm(true)}}>
                 ?
               </button>
               <button onClick={() => {this.changeTerm(false)}}>
@@ -125,6 +148,7 @@ export class App extends React.Component
     event.preventDefault()
     this.setState({cardAmount: event.target[0].value ? parseInt(event.target[0].value) : 10})
     this.setState({startIndex: event.target[1].value ? parseInt(event.target[1].value) : 1})
+    this.setState({shuffle: event.target[2].checked})
     this.setState({startCards: true})
   }
   render()
@@ -132,7 +156,7 @@ export class App extends React.Component
     return (  
     <div  className="App">
       <header className="App-header">
-      {this.state.startCards ? <Flashcards cardAmount={this.state.cardAmount} startIndex = {this.state.startIndex}/> :(
+      {this.state.startCards ? <Flashcards cardAmount={this.state.cardAmount} startIndex = {this.state.startIndex} shuffle = {this.state.shuffle}/> :(
         <form onSubmit={this.handleSubmit}>
         <label for="cardNumber"> How many flashcards to study?
           <input type="number" min="5"/>
@@ -144,9 +168,14 @@ export class App extends React.Component
         </label>
           <br/>
           <br/>
+        <label> Randomize?
+          <input type = "checkbox"/>
+        </label>
+          <br/>
+          <br/>
           <input type="submit"/>
+
         </form>)}
-        {/*<Flashcards/>*/}
       </header>
     </div>
     )
