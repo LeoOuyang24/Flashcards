@@ -38,8 +38,8 @@
 }
 
 .defs{
-  height: 500px;
-  width: 500px;
+  height: 60vh;
+  width: 30vw;
   border-color: grey;
   border-style: solid;
   margin:auto;
@@ -66,7 +66,31 @@
   font-size: 1.01em;
 }
 
-input{
+.WriteTerm{
+  font-size: 1.01em;
+  border-radius: 25px;
+  margin: 1em;
+  padding: .5em;
+  width: fit-content;
+  border-color:white;
+  border-style: solid;
+}
+
+.terms{
+  overflow-x:hidden;
+  overflow-y:scroll;
+  max-height: 50vh;
+  max-width: 60vw;
+  border-color:red;
+  border-style:solid;
+  margin-bottom: 1em;
+  display: flex;
+  flex-wrap:wrap;
+  align-items: center;
+}
+
+
+input, textarea{
   position: relative;
   background: white;
   color: black;
@@ -83,3 +107,10 @@ input{
   color:red;
 }
 
+.writeHere{
+  height:5em;
+  width: 100%;
+  max-width: 80vw;
+  align-items:center;
+  margin:auto;
+}
