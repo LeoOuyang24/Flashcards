@@ -38,7 +38,7 @@
 }
 
 .defs{
-  height: 60vh;
+  min-height: 70vh;
   width: 30vw;
   border-color: grey;
   border-style: solid;
@@ -96,7 +96,26 @@ input, textarea{
   color: black;
   border-radius: 25px;
   padding: .5em;
-  font-size: 1.001em;
+  font-size: 0.9em;
+}
+
+input:disabled{
+  background-color:gray;
+}
+
+.optionsMenu{
+  overflow: auto;
+  width: 100%;
+
+}
+
+.option{
+  text-align:center;             
+  float: center;
+  display: inline-block;
+  margin: 1em;
+
+
 }
 
 .counter{
