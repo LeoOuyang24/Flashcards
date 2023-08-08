@@ -38,7 +38,7 @@
 }
 
 .defs{
-  min-height: 70vh;
+  height: 70vh;
   width: 30vw;
   border-color: grey;
   border-style: solid;
