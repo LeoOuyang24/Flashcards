@@ -2,17 +2,16 @@ import './App.css';
 import {read} from './read.js'
 import React, { Component, useState, useEffect } from 'react';
 import {Term, Text} from './term.js'
-import {getCards} from './util.js'
+import {getCards,prng} from './util.js'
 
 
-function shuffle(array) { //shamelessly stolen from https://stackoverflow.com/a/2450976/6947131
+function shuffle(array,seed=Date.now()) { //shamelessly stolen from https://stackoverflow.com/a/2450976/6947131
   let currentIndex = array.length,  randomIndex;
-
   // While there remain elements to shuffle.
-  while (currentIndex != 0) {
+  let p = prng(seed)
 
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
+  while (currentIndex != 0) {
+    randomIndex = Math.floor(p()* currentIndex);
     currentIndex--;
 
     // And swap it with the current element.
@@ -23,25 +22,10 @@ function shuffle(array) { //shamelessly stolen from https://stackoverflow.com/a/
   return array;
 }
 
-export class FlashcardsGame extends React.Component {
-
-  constructor(props)
-  {
-    super(props);
-    this.state = {
-      studyTerms: [], //current set we are studying
-      curTerm: 0,
-      showTerm: true, //show the term vs the definition
-      incorrect: []
-    }
-    let link ="https://raw.githubusercontent.com/clem109/hsk-vocabulary/master/hsk-vocab-json/";
-    for (let hsk  of this.props.levels)
-    {
-     getCards(link + "hsk-level-" + hsk + ".json",this.props.startIndex,this.props.cardAmount)
-    .then( (cards) => {
-      if (props.charOnly) //parse each individual term
-      {
-        let newCards = new Map()
+function parseCharsOnly(cards)
+{
+  let finalCards = []
+          let newCards = new Map()
         cards.forEach((hanzi) => {
           for (let i = 0; i < hanzi.hanzi.length; i++)
           {
@@ -70,50 +54,60 @@ export class FlashcardsGame extends React.Component {
             }
           }
         })
-        cards = []
         newCards.forEach((value,key) => {
           let pinyin = ""
           value.pinyin.forEach((pin) => pinyin += pin + ", ")
-          cards.push({
+          finalCards.push({
             front: key,
             highlight: pinyin.slice(0,-2),
             back: value.examples
           })
 
         })
+        return finalCards
+}
+
+export class FlashcardsGame extends React.Component {
+
+  constructor(props)
+  {
+    super(props);
+    this.state = {
+      studyTerms: [], //current set we are studying
+      curTerm: 0,
+      showTerm: true, //show the term vs the definition
+      defaultTerm: true, //by default, each flash card shows the term first
+      incorrect: []
+    }
+    let link ="https://raw.githubusercontent.com/clem109/hsk-vocabulary/master/hsk-vocab-json/";
+    //promise.all allows us to get all the cards in one promise
+    Promise.all(this.props.levels.map((hsk) => {console.log(hsk); return getCards(link + "hsk-level-" + hsk + ".json",this.props.startIndex);}))
+    .then( (cards) => {
+      cards = cards.reduce((accum, item) => accum.concat(item)) //Promise.all returns an array of arrays with cards, so this compiles them into one array rather than an array of arrays
+      let finalCards = []
+      if (props.charOnly) //parse each individual term
+      {
+        finalCards = parseCharsOnly(cards)
 
       }
       else //if not characters only, parse the terms normally
       {
-         cards = cards.map((hanzi) => {
+         finalCards = cards.map((hanzi) => {
             return {front: hanzi.hanzi, 
                     highlight: hanzi.pinyin,
                     back: hanzi.translations}
                   })
       }
-    this.setState((state,props) => {
-        if (this.props.shuffle)
-        {
-          return {studyTerms: shuffle(state.studyTerms.concat(cards))}
-        }
-        else
-        {
-          return {studyTerms: state.studyTerms.concat(cards)}
-        }
-      })
-    }).catch((err) => console.log(err))
+      //there is a warning about this call, just ignore it. Otherwise React doesn't reload properly when the flashcards are loaded
+      this.setState(this.props.shuffle ? {studyTerms: shuffle(finalCards,this.props.seed)} : {studyTerms: finalCards})
+      this.switchToIncorrect = this.switchToIncorrect.bind(this)
 
-    }
-      if (props.shuffle)
-      {
-        this.setState((state,props) => {studyTerms: shuffle(state.studyTerms)})
-      }
-    this.switchToIncorrect = this.switchToIncorrect.bind(this)
+    }).catch((err) => console.log(err))
   }
 
   changeTerm(positive)
   {
-    this.setState({showTerm: true})
+    this.setState({showTerm: this.state.defaultTerm})
     if (!positive)
     {
       if (this.state.studyTerms[this.state.curTerm-1] == this.state.incorrect[this.state.incorrect.length - 1]) //when we go backwards we pop incorrect terms off
@@ -127,7 +121,7 @@ export class FlashcardsGame extends React.Component {
   {
       if (this.state.incorrect.length > 0)
       {
-        this.setState({studyTerms: this.props.shuffle ? shuffle(this.state.incorrect) : this.state.incorrect, //swap to incorrect terms, shuffling if needed
+        this.setState({studyTerms: shuffle(this.state.incorrect), //swap to incorrect terms and shuffle them
                       incorrect: [],
                        showTerm: true,
                       curTerm: 0})
@@ -169,7 +163,8 @@ export class FlashcardsGame extends React.Component {
               </div>
             </div>
             <div className = "defs">
-              {display}
+              <input type="checkbox" onClick = {() => this.setState({defaultTerm: !this.state.defaultTerm,showTerm: !this.state.defaultTerm})}/>{this.state.defaultTerm ? "Terms first" : "Definition first"}
+              {display} 
             </div>
             <div className = "buttons">
               <button onClick = {() => this.setState({showTerm: !this.state.showTerm})}>
@@ -184,6 +179,7 @@ export class FlashcardsGame extends React.Component {
               <button onClick={() => {this.changeTerm(false)}}>
                 ⏎
               </button>
+              <br/>
               <button onClick={this.switchToIncorrect}>
                 Study Incorrect Terms
               </button>

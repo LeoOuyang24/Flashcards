@@ -56,13 +56,13 @@
 }
 
 .buttons button{
-  margin-top: 2em;
+  margin-top: 0em;
   position: relative;
   background: white;
   color: black;
   border-radius: 25px;
   padding: 1em;
-  width: 7em;
+  width: 5em;
   font-size: 1.01em;
 }
 
